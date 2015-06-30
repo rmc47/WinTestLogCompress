@@ -60,7 +60,8 @@ namespace WinTestLogCompress
         {
             // Setting an incrementing serial number on the file means the server can ACK the serial
             // and we can resend the file if necessary.
-            string logDir = @"C:\logs\";
+            string logDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\WinTestLogCompress\";
+            Directory.CreateDirectory(logDir); // Create the dir if it doesn't already exist
             string[] filesInDir = Directory.GetFiles(logDir);
             int nextNum = filesInDir.Length;
             nextNum = nextNum + 1;
