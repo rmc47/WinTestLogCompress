@@ -7,4 +7,4 @@ Tested with Win-Test 4.15.0 in HF DXpedition mode. Other versions of Win-Test an
 
 This has been designed for use on a particular amateur radio DXpedition and parts may need rewriting for use by other groups.
 
-Requires .NET 4.5 and the program must be able to write to C:\logs to store the binaries created.
+Requires .NET 4.5.
