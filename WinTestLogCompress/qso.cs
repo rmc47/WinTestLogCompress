@@ -104,58 +104,14 @@ namespace WinTestLogCompress
             Int16 minsSinceStart = this.minsSinceDXPedStart();
             byte[] mins = BitConverter.GetBytes(minsSinceStart);
             Buffer.BlockCopy(mins, 0, compressed, 1, 2);
-            // Band (4 bits); Mode (2 bits); Op (4 bits); CS len (6 bits)
-            int[] byte3 = new int[(8)];
-            int[] byte4 = new int[(8)];
-            switch (this.bandId)
-            {
-                case 0: byte3[0] = 0; byte3[1] = 0; byte3[2] = 0; byte3[3] = 0; break;
-                case 1: byte3[0] = 0; byte3[1] = 0; byte3[2] = 0; byte3[3] = 1; break;
-                case 2: byte3[0] = 0; byte3[1] = 0; byte3[2] = 1; byte3[3] = 0; break;
-                case 3: byte3[0] = 0; byte3[1] = 0; byte3[2] = 1; byte3[3] = 1; break;
-                case 4: byte3[0] = 0; byte3[1] = 1; byte3[2] = 0; byte3[3] = 0; break;
-                case 5: byte3[0] = 0; byte3[1] = 1; byte3[2] = 0; byte3[3] = 1; break;
-                case 6: byte3[0] = 0; byte3[1] = 1; byte3[2] = 1; byte3[3] = 0; break;
-                case 7: byte3[0] = 0; byte3[1] = 1; byte3[2] = 1; byte3[3] = 1; break;
-                case 8: byte3[0] = 1; byte3[1] = 0; byte3[2] = 0; byte3[3] = 0; break;
-                case 9: byte3[0] = 1; byte3[1] = 0; byte3[2] = 1; byte3[3] = 0; break;
-            }
-            switch (this.modeId)
-            {
-                case 0: byte3[4] = 0; byte3[5] = 0; break;
-                case 1: byte3[4] = 0; byte3[5] = 1; break;
-                case 2: byte3[4] = 1; byte3[5] = 0; break; // Datamodes
-                case 3: byte3[4] = 0; byte3[5] = 1; break; // FM
-                case 4: byte3[4] = 1; byte3[5] = 0; break; // Datamodes
-                default: byte3[4] = 1; byte3[5] = 0; break;
-                // TODO: Sats is somewhere on the list from Win-Test. That will be treated as Datamodes by the above, but it's not necessarily true
-            }
-            switch (this.convertOpCallToId())
-            {
-                case 1: byte3[6] = 0; byte3[7] = 0; byte4[0] = 0; byte4[1] = 1; break;
-                case 2: byte3[6] = 0; byte3[7] = 0; byte4[0] = 1; byte4[1] = 0; break;
-                case 3: byte3[6] = 0; byte3[7] = 0; byte4[0] = 1; byte4[1] = 1; break;
-                case 4: byte3[6] = 0; byte3[7] = 1; byte4[0] = 0; byte4[1] = 0; break;
-                case 5: byte3[6] = 0; byte3[7] = 1; byte4[0] = 0; byte4[1] = 1; break;
-                case 6: byte3[6] = 0; byte3[7] = 1; byte4[0] = 1; byte4[1] = 0; break;
-            }
-            string dxCallBin = Convert.ToString(this.dxCall.Length, 2); // Convert to binary
-            dxCallBin = dxCallBin.PadLeft(6, '0');
-            char[] dxCallBinChars = dxCallBin.ToCharArray();
-            int bitPosition = 2;
-            foreach (char dxCallBinChar in dxCallBinChars)
-            {
-                byte4[bitPosition] = int.Parse(dxCallBinChar.ToString());
-                bitPosition++;
-            }
-            Int16 b3 = writeBitArray(byte3);
-            Int16 b4 = writeBitArray(byte4);
-            byte[] b3bA = BitConverter.GetBytes(b3);
-            Buffer.BlockCopy(b3bA, 0, compressed, 3, 1);
-            byte[] b4bA = BitConverter.GetBytes(b4);
-            Buffer.BlockCopy(b4bA, 0, compressed, 4, 1);
-            char[] dxCallChars = this.dxCall.ToCharArray();
-            byte[] dxCallAscii = Encoding.GetEncoding("us-ascii").GetBytes(dxCallChars);
+            // Byte 3: band (4 bits, LSB); op (4 bits, MSB)
+            byte bandAndOp = (byte)((this.bandId & 0x0F) | (this.convertOpCallToId() << 4 & 0xF0));
+            compressed[3] = bandAndOp;
+            // Byte 4: mode (2 bits, LSB); callsign length (6 bits; MSB)
+            byte modeAndCallsignLength = (byte)((this.modeId & 0x03) | (this.dxCall.Length << 2 & 0xFC));
+            compressed[4] = modeAndCallsignLength;
+
+            byte[] dxCallAscii = Encoding.ASCII.GetBytes(this.dxCall);
             Buffer.BlockCopy(dxCallAscii, 0, compressed, 5, dxCallAscii.Length);
             string hash;
             using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
