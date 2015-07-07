@@ -74,7 +74,7 @@ namespace WinTestLogCompress
             Qso qso = new Qso();
             string[] values = rx.Split(' ');
             qso.bandId = Int32.Parse(values[7]);
-            qso.modeId = Int32.Parse(values[6]);
+            qso.wtModeId = Int32.Parse(values[6]);
             qso.qsoTime = Int32.Parse(values[4]);
             qso.dxCall = values[13].Replace("\"","");
             qso.rstTx = Int32.Parse(values[14].Replace("\"",""));
