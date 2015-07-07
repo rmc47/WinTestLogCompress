@@ -14,9 +14,29 @@ namespace WinTestLogCompress
         public string dxCall;
         public string opCall;
         public int bandId;
-        public int modeId;
+        public int wtModeId;
         public int rstTx;
         public int rstRx;
+
+        public const byte MODE_CW = 0;
+        public const byte MODE_PHONE = 1;
+        public const byte MODE_DATA = 2;
+
+        public byte CompressedModeID
+        {
+            get
+            {
+                switch (wtModeId)
+                {
+                    case 0: return MODE_CW;
+                    case 1: return MODE_PHONE;
+                    case 2: return MODE_DATA;
+                    case 3: return MODE_PHONE;
+                    case 4: return MODE_DATA;
+                    default: return MODE_DATA;
+                }
+            }
+        }
 
         public DateTime convertQsoTimeToDateTime()
         {
@@ -53,7 +73,7 @@ namespace WinTestLogCompress
 
         public string convertModeIdToMode()
         {
-            switch (this.modeId)
+            switch (this.wtModeId)
             {
                 case 0: return "CW";
                 case 1: return "SSB";
@@ -108,7 +128,7 @@ namespace WinTestLogCompress
             byte bandAndOp = (byte)((this.bandId & 0x0F) | (this.convertOpCallToId() << 4 & 0xF0));
             compressed[3] = bandAndOp;
             // Byte 4: mode (2 bits, LSB); callsign length (6 bits; MSB)
-            byte modeAndCallsignLength = (byte)((this.modeId & 0x03) | (this.dxCall.Length << 2 & 0xFC));
+            byte modeAndCallsignLength = (byte)((this.CompressedModeID & 0x03) | (this.dxCall.Length << 2 & 0xFC));
             compressed[4] = modeAndCallsignLength;
 
             byte[] dxCallAscii = Encoding.ASCII.GetBytes(this.dxCall);
